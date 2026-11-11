@@ -12,7 +12,6 @@ export const verifyToken = (token: string) => {
       token as string,
       config.JWT_SECRET,
     ) as JwtPayload;
-    console.log("Decoded token:", decoded); // Debugging line
     return decoded;
   } catch (error: any) {
     throw new AppError(

@@ -30,7 +30,6 @@ const userSchema = new Schema<IUser>(
       required: true,
     },
 
-    // OTP / password-reset fields
     passwordResetOtp: {
       type: String,
       select: false,

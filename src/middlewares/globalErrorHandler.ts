@@ -67,9 +67,14 @@ const globalErrorHandler: ErrorRequestHandler = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction,
 ) => {
+
   let statusCode = 500;
   let message = 'Something went wrong!';
   let errorSources: TErrorSource[] = [{ path: '', message }];
+
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Error:', err);
+  }
 
   // ── Zod ──────────────────────────────────────────────────────────────────
   if (err instanceof ZodError) {

@@ -13,7 +13,7 @@ const sendResponse = <T>(res: Response, responseData: TResponse<T>) => {
     success: responseData.success,
     statusCode: responseData.statusCode,
     message: responseData.message,
-    data: responseData.data,
+    result: responseData.data,
     accessToken: responseData.accessToken,
   });
 };
