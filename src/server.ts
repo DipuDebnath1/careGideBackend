@@ -7,7 +7,7 @@ const startServer = async (): Promise<void> => {
   try {
     await connectDB();
 app.listen(config.PORT,  () => {
-  console.log(`Care Guide task Server running on port ${config.PORT}`);
+  console.log(`Care Guide task Server running on http://${config.IP_ADDRESS}:${config.PORT}`);
 });
 
   } catch (error) {
