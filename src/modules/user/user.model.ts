@@ -1,5 +1,5 @@
 
-import  { Schema,model } from "mongoose";
+import { Schema, model } from "mongoose";
 import { IUser } from "./user.interface";
 
 const userSchema = new Schema<IUser>(
@@ -28,6 +28,21 @@ const userSchema = new Schema<IUser>(
       enum: ["user", "admin"],
       default: "user",
       required: true,
+    },
+
+    // OTP / password-reset fields
+    passwordResetOtp: {
+      type: String,
+      select: false,
+    },
+    passwordResetOtpExpires: {
+      type: Date,
+      select: false,
+    },
+    passwordResetVerified: {
+      type: Boolean,
+      default: false,
+      select: false,
     },
   },
   {
