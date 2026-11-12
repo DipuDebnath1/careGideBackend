@@ -13,10 +13,18 @@ const app = express();
 
 // Global middlewares
 app.use(helmet());
-app.use(cors({
-  origin: "*",
-  credentials: true,
-}));
+
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+        callback(null, true);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
