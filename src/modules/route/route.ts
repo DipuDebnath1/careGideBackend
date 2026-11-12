@@ -2,6 +2,7 @@ import express from 'express';
 import AuthRoute from '../auth/auth.route';
 import UserRoute from '../user/user.route';
 import NoteRoute from '../notes/note.route';
+import PostRoute from '../posts/post.route';
 
 const router = express.Router();
 
@@ -17,6 +18,10 @@ const moduleRoute = [
   {
     path: '/notes',
     route: NoteRoute,
+  },
+  {
+    path: '/posts',
+    route: PostRoute,
   },
 ];
 

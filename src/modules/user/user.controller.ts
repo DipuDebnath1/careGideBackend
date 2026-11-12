@@ -56,6 +56,19 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// ─── Get User Self ──────────────────────────────────────────────────────────
+
+const getUserSelf = catchAsync(async (req: IRequestWithUser, res: Response) => {
+  const user = await UserService.getUserById(req.user.userId as string);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User retrieved successfully",
+    data: user,
+  });
+});
+
 // ─── Admin Create User ────────────────────────────────────────────────────────
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
@@ -100,6 +113,7 @@ export const UserController = {
   getAllUsers,
   getUsersGroupedByInterest,
   getUserById,
+  getUserSelf,
   createUser,
   updateUser,
   deleteUser,
