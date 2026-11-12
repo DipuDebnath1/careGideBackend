@@ -1,18 +1,18 @@
 
-import { Request, Response } from "express";
-import { AuthService } from "./auth.service";
+import { CookieOptions, Request, Response } from "express";
+import config from "../../config";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
-import config from "../../config";
+import { AuthService } from "./auth.service";
 
 // Cookie options shared between register and login
-const cookieOptions = {
-  httpOnly: true,                              // Not accessible via JS (XSS protection)
-  secure: config.NODE === "production",        // HTTPS only in production
-  sameSite: "strict" as const,                 // CSRF protection
-  maxAge: 24 * 60 * 60 * 1000,               // 1 day in milliseconds
+const cookieOptions: CookieOptions = {
+  httpOnly: true,
+  secure: config.NODE === "production",
+  sameSite: "none",
+  maxAge: 24 * 60 * 60 * 1000,
+  path: "/",
 };
-
 // ─── Register ────────────────────────────────────────────────────────────────
 
 const register = catchAsync(async (req: Request, res: Response) => {
