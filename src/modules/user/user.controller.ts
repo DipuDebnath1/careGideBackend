@@ -1,7 +1,21 @@
 import { Request, Response } from "express";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
+import { IRequestWithUser } from "./user.interface";
 import { UserService } from "./user.service";
+
+// ─── update user self profile ───────────────────────────────────────────────────────────────
+
+const updateUserSelfProfile = catchAsync(async (req: IRequestWithUser, res: Response) => {
+  const result = await UserService.updateUser(req.user.userId as string, req.body);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User updated successfully",
+    data: result,
+  });
+});
 
 // ─── List All Users ───────────────────────────────────────────────────────────
 
@@ -13,6 +27,19 @@ const getAllUsers = catchAsync(async (req: Request, res: Response) => {
     success: true,
     message: "Users retrieved successfully",
     data: users,
+  });
+});
+
+// ─── Users grouped by interest ────────────────────────────────────────────────
+
+const getUsersGroupedByInterest = catchAsync(async (req: Request, res: Response) => {
+  const groups = await UserService.getUsersGroupedByInterest( req.query);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Users grouped by interest",
+    data: groups,
   });
 });
 
@@ -69,7 +96,9 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const UserController = {
+  updateUserSelfProfile,
   getAllUsers,
+  getUsersGroupedByInterest,
   getUserById,
   createUser,
   updateUser,

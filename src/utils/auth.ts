@@ -3,6 +3,7 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import AppError from "../errors/AppError";
 import config from "../config";
+import { IRequestWithUser } from "../modules/user/user.interface";
 
 
 // refresh token decoded
@@ -10,7 +11,7 @@ export const verifyToken = (token: string) => {
   try {
     const decoded = jwt.verify(
       token as string,
-      config.JWT_SECRET,
+      config.JWT_SECRET as string ,
     ) as JwtPayload;
     return decoded;
   } catch (error: any) {
@@ -50,7 +51,7 @@ const auth =
         }
       }
       // Attach the user to the request object
-      req.user = decodedData;
+      (req as IRequestWithUser).user = decodedData;
 
       // Continue to the next middleware
       next();

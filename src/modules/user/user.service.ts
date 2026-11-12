@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { PipelineStage } from "mongoose";
 import AppError from "../../errors/AppError";
 import User from "./user.model";
 
@@ -24,7 +25,7 @@ const getAllUsers = async (query: any) => {
 
 
   const [users, total] = await Promise.all([
-    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).select("name email role createdAt isDeleted"),
+    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).select("name email role createdAt isDeleted interests"),
     User.countDocuments(filter),
   ]);
 
@@ -43,10 +44,84 @@ const getAllUsers = async (query: any) => {
 // ─── Get Single User ──────────────────────────────────────────────────────────
 
 const getUserById = async (userId: string) => {
-  const user = await User.findById(userId).select("-password");
+  const user = await User.findById(userId).select("name email role interests createdAt isDeleted");
   if (!user) throw new AppError(404, "User not found");
   return user;
 };
+
+// ─── Users grouped by  interest ──────────────────────────────────────────
+const getUsersGroupedByInterest = async (query: any) => {
+  const interestFilter = query?.interest?.trim().toLowerCase();
+  const page = parseInt(query?.page as string) || 1;
+  const limit = parseInt(query?.limit as string) || 10;
+  const skip = (page - 1) * limit;
+
+  const pipeline: PipelineStage[] = [
+    { $match: { isDeleted: false, role: { $ne: "admin" } } },
+    { $unwind: "$interests" },
+    {
+      $addFields: {
+        interest: { $toLower: { $trim: { input: "$interests" } } },
+      },
+    },
+    { $match: { interest: { $ne: "" } } },
+  ];
+
+  if (interestFilter) {
+    pipeline.push({ $match: { interest: interestFilter } });
+  }
+
+  pipeline.push(
+    {
+      $group: {
+        _id: "$interest",
+        users: {
+          $push: {
+            id: "$_id",
+            name: "$name",
+            email: "$email",
+            role: "$role",
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        interest: "$_id",
+        count: { $size: "$users" },
+        users: 1,
+      },
+    },
+    { $sort: { interest: 1 } },
+    // pagination
+    {
+      $facet: {
+        data: [{ $skip: skip }, { $limit: limit }],
+        total: [{ $count: 'count' }],
+      },
+    },
+  
+  );
+
+
+
+  const result = await User.aggregate(pipeline);
+  
+  const total = result[0]?.total[0]?.count ?? 0;
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    data: result[0]?.data ?? [],
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages,
+    },
+  };
+};
+
 
 // ─── Admin Create User ────────────────────────────────────────────────────────
 
@@ -55,6 +130,7 @@ const createUser = async (payload: {
   email: string;
   password: string;
   role?: "user" | "admin";
+  interests?: string[];
 }) => {
   const email = payload.email.trim().toLowerCase();
 
@@ -68,6 +144,7 @@ const createUser = async (payload: {
     email,
     password: hashedPassword,
     role: payload.role ?? "user",
+    interests: payload.interests ?? [],
   });
 
   return {
@@ -75,6 +152,7 @@ const createUser = async (payload: {
     name: user.name,
     email: user.email,
     role: user.role,
+    interests: user.interests,
   };
 };
 
@@ -82,7 +160,7 @@ const createUser = async (payload: {
 
 const updateUser = async (
   userId: string,
-  payload: { name?: string; email?: string; role?: "user" | "admin" }
+  payload: { name?: string; email?: string; role?: "user" | "admin"; interests?: string[] }
 ) => {
   // Prevent duplicate email
   if (payload.email) {
@@ -94,7 +172,9 @@ const updateUser = async (
     payload.email = payload.email.trim().toLowerCase();
   }
 
-  const user = await User.findByIdAndUpdate(userId, payload, {
+  const user = await User.findByIdAndUpdate(userId, {
+    $set: payload,
+  }, {
     new: true,
     runValidators: true,
   }).select("-password");
@@ -114,6 +194,7 @@ const deleteUser = async (userId: string) => {
 export const UserService = {
   getAllUsers,
   getUserById,
+  getUsersGroupedByInterest,
   createUser,
   updateUser,
   deleteUser,

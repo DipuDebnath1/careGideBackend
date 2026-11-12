@@ -26,6 +26,10 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    interests: {
+      type: [String],
+      default: [],
+    },
 
     role: {
       type: String,
@@ -58,6 +62,7 @@ const userSchema = new Schema<IUser>(
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
 userSchema.index({ isDeleted: 1 });
+userSchema.index({ interests: 1 });
 
 const User = model<IUser>("User", userSchema);
 

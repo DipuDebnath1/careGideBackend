@@ -1,4 +1,5 @@
 
+import { Request } from "express";
 import { Document } from "mongoose";
 
 export interface IUser extends Document {
@@ -6,6 +7,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: "user" | "admin";
+  interests: string[];
   isDeleted: boolean;
 
   passwordResetOtp?: string;
@@ -14,4 +16,12 @@ export interface IUser extends Document {
 
   createdAt: Date;
   updatedAt: Date;
+}
+
+// req with user 
+export interface IRequestWithUser extends Request {
+  user: {
+    userId: string;
+    role: "user" | "admin";
+  };
 }
