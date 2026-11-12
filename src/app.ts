@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import route from "./modules/route/route";
 import notFound from "./middlewares/notFound";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
+import connectDB from "./config/db";
 
 const app = express();
 
@@ -28,6 +29,16 @@ app.get("/api/v1/health", (_req: Request, res: Response) => {
     message: "Care Guide task Server is running",
     timestamp: new Date().toISOString(),
   });
+});
+
+// Vercel runs this app without server.ts, so connect before any query.
+app.use("/api/v1", async (_req, _res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // API routes

@@ -1,19 +1,34 @@
 import config from "./index";
 import mongoose from "mongoose";
 
-const connectDB = async (): Promise<void> => {
-  try {
-    const connection = await mongoose.connect(
-      config.DATABASE_URI as string
-    );
+let connection: Promise<typeof mongoose> | null = null;
 
-    console.log(
-      `MongoDB Database connected: ${connection.connection.host}`
-    );
-  } catch (error) {
-    console.error("MongoDB Database connection failed:", error);
-    process.exit(1);
+const connectDB = (): Promise<typeof mongoose> => {
+  if (mongoose.connection.readyState === 1) {
+    return Promise.resolve(mongoose);
   }
+
+  if (!config.DATABASE_URI) {
+    return Promise.reject(new Error("DATABASE_URI is not set"));
+  }
+
+  if (!connection) {
+    connection = mongoose
+      .connect(config.DATABASE_URI, { serverSelectionTimeoutMS: 8000 })
+      .then((mongooseInstance) => {
+        console.log(
+          `MongoDB Database connected: ${mongooseInstance.connection.host}`
+        );
+        return mongooseInstance;
+      })
+      .catch((error: unknown) => {
+        connection = null;
+        console.error("MongoDB Database connection failed:", error);
+        throw error;
+      });
+  }
+
+  return connection;
 };
 
 export default connectDB;
