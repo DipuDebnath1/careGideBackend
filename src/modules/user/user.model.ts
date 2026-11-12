@@ -22,6 +22,10 @@ const userSchema = new Schema<IUser>(
       required: [true, "Password is required"],
       isPrivate: true, // Exclude from query results by default
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
 
     role: {
       type: String,
@@ -53,6 +57,7 @@ const userSchema = new Schema<IUser>(
 // Explicit indexes
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
+userSchema.index({ isDeleted: 1 });
 
 const User = model<IUser>("User", userSchema);
 

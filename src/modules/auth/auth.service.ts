@@ -1,6 +1,6 @@
 
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../user/user.model";
 import {
@@ -18,12 +18,11 @@ import { sendOtpVerificationMail } from "../../config/mail/sendOtp";
 
 // Generate JWT token
 const generateToken = (userId: string, role: string) => {
-  const accessToken = jwt.sign(
-    { userId, role },
-    config.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
-  return accessToken;
+  const signOptions: SignOptions = {
+    expiresIn: (config.JWT_EXPIRES_IN || "1d") as SignOptions["expiresIn"],
+  };
+
+  return jwt.sign({ userId, role }, config.JWT_SECRET as string, signOptions);
 };
 
 // Generate a 6-digit OTP

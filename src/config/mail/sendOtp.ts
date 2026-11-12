@@ -18,7 +18,6 @@ const generateOtpEmailTemplate = (otp: string): string => {
 };
 
 
-
 // Send OTP email
 export const sendOtpVerificationMail = async (
   to: string,

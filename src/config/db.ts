@@ -1,10 +1,10 @@
-
+import config from "./index";
 import mongoose from "mongoose";
 
 const connectDB = async (): Promise<void> => {
   try {
     const connection = await mongoose.connect(
-      process.env.DATABASE_URI as string
+      config.DATABASE_URI as string
     );
 
     console.log(

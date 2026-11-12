@@ -18,6 +18,10 @@ const noteSchema = new Schema<INote>(
       ref: "User",
       required: [true, "Owner is required"],
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -27,6 +31,7 @@ const noteSchema = new Schema<INote>(
 
 // Fast look-up by owner
 noteSchema.index({ owner: 1 });
+noteSchema.index({ title: "text" });
 
 const Note = model<INote>("Note", noteSchema);
 

@@ -1,13 +1,16 @@
 import bcrypt from "bcryptjs";
-import User from "./user.model";
 import AppError from "../../errors/AppError";
-import { PipelineStage } from "mongoose";
+import User from "./user.model";
 
 // ─── List All Users ───────────────────────────────────────────────────────────
 
 const getAllUsers = async (query: any) => {
 
-  const filter: any = {};
+  const filter: any = {role: { $ne: "admin" }, isDeleted: false};
+
+  if (query?.role) filter.role = query.role;
+  if (query?.isDeleted) filter.isDeleted = query.isDeleted;
+
   if (query?.search) {
     filter.$or = [
       { name: { $regex: query.search, $options: "i" } },
@@ -20,48 +23,13 @@ const getAllUsers = async (query: any) => {
   const skip = (page - 1) * limit;
 
 
-  // Apply any name mail filtering based on the query
-
-  const pipeline: PipelineStage[] = [
-    {
-      $match: filter,
-    },
-    {
-      $lookup: {
-        from: "notes",
-        localField: "_id",
-        foreignField: "owner",
-        as: "notes",
-      },
-    },
-    {
-      $project: {
-        _id: 1,
-        name: 1,
-        email: 1,
-        role: 1,
-        notesCount: { $size: "$notes" },
-      },
-    },
-  ]
-
-     const paginatedPipeline: PipelineStage[] = [
-      ...pipeline,
-      {
-        $facet: {
-          data: [{ $skip: skip }, { $limit: limit }],
-          total: [{ $count: 'count' }],
-        },
-      },
-    ];
-
-    const result = await User.aggregate(paginatedPipeline);
-
-    const data = result[0]?.data || [];
-    const total = result[0]?.total[0]?.count || 0;
+  const [users, total] = await Promise.all([
+    User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).select("name email role createdAt isDeleted"),
+    User.countDocuments(filter),
+  ]);
 
     return {
-      data,
+      data: users,
       pagination: {
         total,
         page,
@@ -138,7 +106,7 @@ const updateUser = async (
 // ─── Admin Delete User ────────────────────────────────────────────────────────
 
 const deleteUser = async (userId: string) => {
-  const user = await User.findByIdAndDelete(userId);
+  const user = await User.findByIdAndUpdate(userId, {isDeleted: true});
   if (!user) throw new AppError(404, "User not found");
   return { message: "User deleted successfully" };
 };

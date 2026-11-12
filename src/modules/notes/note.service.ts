@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
-import Note from "./note.model";
 import AppError from "../../errors/AppError";
+import Note from "./note.model";
 
 // ─── Create Note ──────────────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ const createNote = async (
 
 const getMyNotes = async (userId: string, query: Record<string, unknown>) => {
 
-  const filter: any = {owner: new Types.ObjectId(userId)};
+  const filter: any = {owner: new Types.ObjectId(userId), isDeleted: false};
   if (query?.search) {
     filter.$or = [
       { title: { $regex: query.search, $options: "i" } },
@@ -32,11 +32,22 @@ const getMyNotes = async (userId: string, query: Record<string, unknown>) => {
   const limit = parseInt(query?.limit as string) || 10;
   const skip = (page - 1) * limit;
 
-  const notes = await Note.find(filter).sort({
-    createdAt: -1,
-  }).skip(skip).limit(limit);
+  const [notes, total] = await Promise.all([
+    Note.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).select("title content createdAt"),
+    Note.countDocuments(filter),
+  ]);
 
-  return notes;
+
+  return {
+    data:  notes,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    }
+  };
+
 };
 
 // ─── Get All Notes (Admin only) ───────────────────────────────────────────────
@@ -46,7 +57,7 @@ const getAllNotes = async (query: Record<string, unknown>) => {
   const limit = parseInt(query?.limit as string) || 10;
   const skip = (page - 1) * limit;
 
-  const filter: any = {};
+  const filter: any = {isDeleted: false};
   if (query?.search) {
     filter.$or = [
       { title: { $regex: query.search, $options: "i" } },
@@ -56,20 +67,33 @@ const getAllNotes = async (query: Record<string, unknown>) => {
     filter.owner = new Types.ObjectId(query.owner as string);
   }
 
-  const notes = await Note.find(filter)
+  const [notes, total] = await Promise.all([
+    Note.find(filter)
+    .select("title content createdAt isDeleted")
     .populate("owner", "name email role")
-    .sort({ createdAt: -1 }).skip(skip).limit(limit);
-  return notes;
+    .sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Note.countDocuments(filter),
+  ]);
+
+  return {
+    data: notes,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    }
+  };
 };
 
 // ─── Get Single Note ──────────────────────────────────────────────────────────
 
 const getNoteById = async (noteId: string, userId: string, role: string) => {
-  const note = await Note.findById(noteId).populate("owner", "name email");
+  const note = await Note.findById(noteId).select("title content createdAt isDeleted").populate("owner", "name email")
   if (!note) throw new AppError(404, "Note not found");
 
   // Admin can see any note; user only their own
-  if (role !== "admin" && note.owner.toString() !== userId) {
+  if (role !== "admin" && note.owner._id.toString() !== userId.toString()) {
     throw new AppError(403, "You are not allowed to view this note");
   }
 
@@ -111,7 +135,7 @@ const deleteNote = async (noteId: string, userId: string, role: string) => {
     throw new AppError(403, "You are not allowed to delete this note");
   }
 
-  await Note.findByIdAndDelete(noteId);
+  await Note.findByIdAndUpdate(noteId, {isDeleted: true});
 
   return { message: "Note deleted successfully" };
 };

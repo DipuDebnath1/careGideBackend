@@ -6,8 +6,8 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: "user" | "admin";
+  isDeleted: boolean;
 
-  // OTP / password-reset fields
   passwordResetOtp?: string;
   passwordResetOtpExpires?: Date;
   passwordResetVerified?: boolean;

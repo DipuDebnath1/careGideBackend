@@ -8,8 +8,6 @@ import route from "./modules/route/route";
 import notFound from "./middlewares/notFound";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
 
-// Load environment variables
-
 const app = express();
 
 // Global middlewares

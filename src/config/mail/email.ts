@@ -33,4 +33,6 @@ const sendEmail = async (
   await transport.sendMail(msg);
 };
 
+verifyEmailTransport();
+
 export { sendEmail, transport };
